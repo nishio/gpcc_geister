@@ -138,7 +138,7 @@ def print_board(view):
         ''.join(ret[i * BOARD_WIDTH:(i + 1) * BOARD_WIDTH])
         for i in range(BOARD_WIDTH))
     print 'o' * view.dead_blue, 'x' * view.dead_red
-
+    print
 
 def get_my_blue(board):
     return board[:NUM_GEISTER / 4]
@@ -234,7 +234,7 @@ class FastestP(AI):
 
 
 MAX_TURNS = 300
-def match(p1, p2, show_detail=False, record=True):
+def match(p1, p2, show_detail=True, record=True):
     "match p1 and p2, return p1's WIN/LOSE/EVEN"
     g = Game()
     #print g
@@ -243,29 +243,25 @@ def match(p1, p2, show_detail=False, record=True):
         if show_detail:
             print p1
             print_board(v)
-            print
         move = p1.choice(v)
         #print move
         g = do_move(g, 0, move)
         if g == WIN: return WIN
         if g == LOSE: return LOSE
         if show_detail:
-            print_board(g)
-            print
+            print_board(v)
 
         v = g.to_view(1)
         if show_detail:
             print p2
-            print_board(g)
-            print
+            print_board(v)
         move = p2.choice(v)
         #print move
         g = do_move(g, 1, move)
         if g == WIN: return LOSE
         if g == LOSE: return WIN
         if show_detail:
-            print_board(g)
-            print
+            print_board(v)
 
     return EVEN
 
