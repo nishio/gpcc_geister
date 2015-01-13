@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-from random import choice, shuffle, seed
+from random import choice, shuffle, seed, random
 from copy import copy
 from collections import defaultdict, Counter
 seed(1234)
@@ -136,7 +136,7 @@ class Fastest(AI):
             g = do_move(board, move)
 
             # 勝てるなら勝つ
-            if g == WIN: return move
+            if g == WIN: return move # これを知っているのはおかしい
             # 負ける手は避ける
             if g == LOSE: continue  # 負ける手しか打てないレアケースがあるのでよくない
 
@@ -149,16 +149,28 @@ class Fastest(AI):
             scored_moves[dist].append(move)
         return choice(scored_moves[min(scored_moves)])
 
+class FastestP(AI):
+    "epsilon greedy"
+    def __init__(self, p):
+        self.p = p
+    def choice(self, board):
+        moves = find_possible_move(board)
+        if random() < self.p:
+            return choice(moves)
+        return Fastest().choice(board)
+
 MAX_TURNS = 300
-def match(p1, p2, show_detail=False):
+def match(p1, p2, show_detail=False, record=True):
     "match p1 and p2, return p1's WIN/LOSE/EVEN"
     g = make_new_game()
+    #print g
     for i in range(MAX_TURNS):
         if show_detail:
             print p1
             print_board(g)
             print
         move = p1.choice(g)
+        #print move
         g = do_move(g, move)
         if g == WIN: return WIN
         if g == LOSE: return LOSE
@@ -171,6 +183,7 @@ def match(p1, p2, show_detail=False):
             print_board(g)
             print
         move = p2.choice(g)
+        #print move
         g = do_move(g, move)
         if g == WIN: return LOSE
         if g == LOSE: return WIN
@@ -184,6 +197,7 @@ def match(p1, p2, show_detail=False):
 #while True:
 #    print match(Fastest(), Fastest())
 
-print Counter(match(Random(), Fastest()) for x in range(1000))
-print Counter(match(Fastest(), Random()) for x in range(1000))
-print Counter(match(Fastest(), Fastest()) for x in range(1000))
+#print Counter(match(Random(), Fastest()) for x in range(1000))
+#print Counter(match(Fastest(), Random()) for x in range(1000))
+
+#match(Fastest(), FastestP(p=0.1))
