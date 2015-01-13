@@ -37,13 +37,14 @@ def make_new_game():
     shuffle(me)
     return me + op
 
+def to_xy(pos):
+    return (pos % BOARD_WIDTH, pos / BOARD_WIDTH)
 def find_possible_move(board):
     ret = []
     me = board[:NUM_GEISTER]
     for i, pos in enumerate(me):
         if pos == IS_DEAD: continue
-        x = pos % BOARD_WIDTH
-        y = pos / BOARD_WIDTH
+        x, y = to_xy(pos)
         if y != 0 and pos + UP not in me:
             ret.append((i, UP))
         if y !=  BOARD_WIDTH - 1 and pos + DOWN not in me:
@@ -118,6 +119,9 @@ class Random(AI):
 #def is_blue(i):
 #    return i < NUM_GEISTER / 4
 
+def get_my_blue(board):
+    return board[:NUM_GEISTER / 4]
+
 class Fastest(AI):
     "自分のゴールインまでの手数を短くする"
     def choice(self, board):
@@ -137,16 +141,16 @@ class Fastest(AI):
             if g == LOSE: continue  # 負ける手しか打てないレアケースがあるのでよくない
 
             def calc_dist(pos):
-                x = pos % 4
-                y = pos / 4
+                x, y = to_xy(pos)
                 return y + min(x, 3 - x)
 
-            dist = min(calc_dist(pos) for pos in g[:NUM_GEISTER / 4])
+            dist = min(calc_dist(pos) for pos in get_my_blue(g))
+            #print "dist", move, dist
             scored_moves[dist].append(move)
         return choice(scored_moves[min(scored_moves)])
 
 MAX_TURNS = 300
-def match(p1, p2, show_detail=True):
+def match(p1, p2, show_detail=False):
     "match p1 and p2, return p1's WIN/LOSE/EVEN"
     g = make_new_game()
     for i in range(MAX_TURNS):
@@ -177,5 +181,9 @@ def match(p1, p2, show_detail=True):
     return EVEN
 
 
-while True:
-    print match(Fastest(), Fastest())
+#while True:
+#    print match(Fastest(), Fastest())
+
+print Counter(match(Random(), Fastest()) for x in range(1000))
+print Counter(match(Fastest(), Random()) for x in range(1000))
+print Counter(match(Fastest(), Fastest()) for x in range(1000))
