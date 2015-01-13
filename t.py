@@ -75,16 +75,17 @@ def print_board(board):
         for i in range(BOARD_WIDTH))
 
 
-def do_move(board, move):
+def do_move(board, move, show_detail=False):
     board = copy(board)
     op = board[NUM_GEISTER:]
     i, d = move
     if d == WIN: return WIN
-    #print board, move
+    if show_detail: print board, move
     newpos = board[i] + d
     if newpos in op:
-        i = op.index(newpos)
-        board[i + NUM_GEISTER] = IS_DEAD
+        #print 'killing', newpos
+        opi = op.index(newpos)
+        board[opi + NUM_GEISTER] = IS_DEAD
         # dead end check
         if all(x == IS_DEAD for x in board[NUM_GEISTER:NUM_GEISTER + NUM_GEISTER / 2]):
             return WIN
@@ -92,7 +93,7 @@ def do_move(board, move):
             return LOSE
 
     board[i] = newpos
-    #print board
+    if show_detail: print board
     return board
 
 def swap_turn(board):
@@ -102,6 +103,9 @@ def swap_turn(board):
 
 
 class AI(object):
+    def __repr__(self):
+        return self.__class__.__name__
+
     def choice(self, board):
         "board -> (index, direction/WIN)"
 
@@ -142,29 +146,36 @@ class Fastest(AI):
         return choice(scored_moves[min(scored_moves)])
 
 MAX_TURNS = 300
-def match(p1, p2):
+def match(p1, p2, show_detail=True):
     "match p1 and p2, return p1's WIN/LOSE/EVEN"
     g = make_new_game()
     for i in range(MAX_TURNS):
-        #print_board(g)
+        if show_detail:
+            print p1
+            print_board(g)
+            print
         move = p1.choice(g)
         g = do_move(g, move)
         if g == WIN: return WIN
         if g == LOSE: return LOSE
-        #print_board(g)
+        if show_detail: print_board(g)
         g = swap_turn(g)
-        #print
+        if show_detail: print
 
-        #print_board(g)
+        if show_detail:
+            print p2
+            print_board(g)
+            print
         move = p2.choice(g)
         g = do_move(g, move)
         if g == WIN: return LOSE
         if g == LOSE: return WIN
-        #print_board(g)
+        if show_detail: print_board(g)
         g = swap_turn(g)
-        #print
+        if show_detail: print
+
     return EVEN
 
-print Counter(match(Random(), Fastest()) for x in range(1000))
-print Counter(match(Fastest(), Random()) for x in range(1000))
-print Counter(match(Fastest(), Fastest()) for x in range(1000))
+
+while True:
+    print match(Fastest(), Fastest())
