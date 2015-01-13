@@ -21,6 +21,7 @@ LEFT = -1
 
 WIN = 'WIN'
 LOSE = 'LOSE'
+EVEN = 'EVEN'
 
 def make_new_game():
     if BOARD_WIDTH == 4:
@@ -77,7 +78,7 @@ def do_move(board, move):
     op = board[NUM_GEISTER:]
     i, d = move
     if d == WIN: return WIN
-    print board, move
+    #print board, move
     newpos = board[i] + d
     if newpos in op:
         i = op.index(newpos)
@@ -89,7 +90,7 @@ def do_move(board, move):
             return LOSE
 
     board[i] = newpos
-    print board
+    #print board
     return board
 
 def swap_turn(board):
@@ -105,28 +106,29 @@ class Random(AI):
         moves = find_possible_move(board)
         return choice(moves)
 
+MAX_TURNS = 100
 def match(p1, p2):
+    "match p1 and p2, return p1's WIN/LOSE/EVEN"
     g = make_new_game()
-    while True:
-        print_board(g)
+    for i in range(MAX_TURNS):
+        #print_board(g)
         move = p1.choice(g)
         g = do_move(g, move)
-        if g == WIN: break
-        if g == LOSE: break
-        print_board(g)
+        if g == WIN: return WIN
+        if g == LOSE: return LOSE
+        #print_board(g)
         g = swap_turn(g)
-        print
+        #print
 
-        print_board(g)
+        #print_board(g)
         move = p2.choice(g)
         g = do_move(g, move)
-        if g == WIN: break
-        if g == LOSE: break
-        print_board(g)
+        if g == WIN: return LOSE
+        if g == LOSE: return WIN
+        #print_board(g)
         g = swap_turn(g)
-        print
+        #print
+    return EVEN
 
-
-p1 = Random()
-p2 = Random()
-match(Random(), Random())
+from collections import Counter
+print Counter(match(Random(), Random()) for x in range(1000))
