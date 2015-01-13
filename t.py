@@ -69,7 +69,7 @@ def print_board(board):
 
     print '\n'.join(
         ''.join(ret[i * BOARD_WIDTH:(i + 1) * BOARD_WIDTH])
-        for i in range(BOARD_WIDTH)) 
+        for i in range(BOARD_WIDTH))
 
 
 def do_move(board, move):
@@ -98,33 +98,35 @@ def swap_turn(board):
     return board
 
 
-g = make_new_game()
-
 class AI(object): pass
 
 class Random(AI):
     def choice(self, board):
         moves = find_possible_move(board)
-        return choice(moves)        
+        return choice(moves)
+
+def match(p1, p2):
+    g = make_new_game()
+    while True:
+        print_board(g)
+        move = p1.choice(g)
+        g = do_move(g, move)
+        if g == WIN: break
+        if g == LOSE: break
+        print_board(g)
+        g = swap_turn(g)
+        print
+
+        print_board(g)
+        move = p2.choice(g)
+        g = do_move(g, move)
+        if g == WIN: break
+        if g == LOSE: break
+        print_board(g)
+        g = swap_turn(g)
+        print
+
 
 p1 = Random()
 p2 = Random()
-
-while True:
-    print_board(g)
-    move = p1.choice(g)
-    g = do_move(g, move)
-    if g == WIN: break
-    if g == LOSE: break
-    print_board(g)    
-    g = swap_turn(g)
-    print
-
-    print_board(g)
-    move = p2.choice(g)
-    g = do_move(g, move)
-    if g == WIN: break
-    if g == LOSE: break
-    print_board(g)    
-    g = swap_turn(g)
-    print
+match(Random(), Random())
