@@ -45,13 +45,13 @@ def find_possible_move(board):
             ret.append((i, UP))
         if y !=  BOARD_WIDTH - 1 and pos + DOWN not in me:
             ret.append((i, DOWN))
-        if x != 0 and pos + RIGHT not in me:
-           ret.append((i, RIGHT))
-        if x != BOARD_WIDTH - 1 and pos + LEFT not in me:
+        if x != 0 and pos + LEFT not in me:
            ret.append((i, LEFT))
+        if x != BOARD_WIDTH - 1 and pos + RIGHT not in me:
+           ret.append((i, RIGHT))
 
         if (x == 0 or x == BOARD_WIDTH - 1) and y == 0 and i < NUM_GEISTER / 2:
-            return WIN
+            return [(i, WIN)]
 
     return ret
 
@@ -76,6 +76,7 @@ def do_move(board, move):
     board = copy(board)
     op = board[NUM_GEISTER:]
     i, d = move
+    if d == WIN: return WIN
     print board, move
     newpos = board[i] + d
     if newpos in op:
@@ -83,9 +84,9 @@ def do_move(board, move):
         board[i + NUM_GEISTER] = IS_DEAD
         # dead end check
         if all(x == IS_DEAD for x in board[NUM_GEISTER:NUM_GEISTER + NUM_GEISTER / 2]):
-            return "WIN"
+            return WIN
         if all(x == IS_DEAD for x in board[NUM_GEISTER + NUM_GEISTER / 2:]):
-            return "LOSE"
+            return LOSE
 
     board[i] = newpos
     print board
@@ -99,11 +100,28 @@ def swap_turn(board):
 
 g = make_new_game()
 
+class AI(object): pass
+
+class Random(AI):
+    def choice(self, board):
+        moves = find_possible_move(board)
+        return choice(moves)        
+
+p1 = Random()
+p2 = Random()
+
 while True:
+    print_board(g)
+    move = p1.choice(g)
+    g = do_move(g, move)
+    if g == WIN: break
+    if g == LOSE: break
     print_board(g)    
-    moves = find_possible_move(g)
-    if moves == WIN: break
-    move = choice(moves)
+    g = swap_turn(g)
+    print
+
+    print_board(g)
+    move = p2.choice(g)
     g = do_move(g, move)
     if g == WIN: break
     if g == LOSE: break
