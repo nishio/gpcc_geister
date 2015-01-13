@@ -1,5 +1,7 @@
+# -*- encoding: utf-8 -*-
 from random import choice, shuffle, seed
 from copy import copy
+from collections import defaultdict, Counter
 seed(1234)
 
 ## mini-geister
@@ -52,7 +54,7 @@ def find_possible_move(board):
            ret.append((i, RIGHT))
 
         if (x == 0 or x == BOARD_WIDTH - 1) and y == 0 and i < NUM_GEISTER / 2:
-            return [(i, WIN)]
+            return [(i, WIN)]  # 上がれる手があるときにはそれだけを候補とする
 
     return ret
 
@@ -99,14 +101,47 @@ def swap_turn(board):
     return board
 
 
-class AI(object): pass
+class AI(object):
+    def choice(self, board):
+        "board -> (index, direction/WIN)"
 
 class Random(AI):
     def choice(self, board):
         moves = find_possible_move(board)
         return choice(moves)
 
-MAX_TURNS = 100
+
+#def is_blue(i):
+#    return i < NUM_GEISTER / 4
+
+class Fastest(AI):
+    "自分のゴールインまでの手数を短くする"
+    def choice(self, board):
+        moves = find_possible_move(board)
+        if moves[0][1] == WIN: return moves[0]
+        scored_moves = defaultdict(list)
+        for move in moves:
+            # 勝てるなら勝つ
+            if move[1] == WIN: return move
+            # 本当は正確には「自分の駒が道を塞いでいる」効果を求めるために
+            # きちんと最短パスを計算するべきだが、このAIでは省略
+            g = do_move(board, move)
+
+            # 勝てるなら勝つ
+            if g == WIN: return move
+            # 負ける手は避ける
+            if g == LOSE: continue  # 負ける手しか打てないレアケースがあるのでよくない
+
+            def calc_dist(pos):
+                x = pos % 4
+                y = pos / 4
+                return y + min(x, 3 - x)
+
+            dist = min(calc_dist(pos) for pos in g[:NUM_GEISTER / 4])
+            scored_moves[dist].append(move)
+        return choice(scored_moves[min(scored_moves)])
+
+MAX_TURNS = 300
 def match(p1, p2):
     "match p1 and p2, return p1's WIN/LOSE/EVEN"
     g = make_new_game()
@@ -130,5 +165,6 @@ def match(p1, p2):
         #print
     return EVEN
 
-from collections import Counter
-print Counter(match(Random(), Random()) for x in range(1000))
+print Counter(match(Random(), Fastest()) for x in range(1000))
+print Counter(match(Fastest(), Random()) for x in range(1000))
+print Counter(match(Fastest(), Fastest()) for x in range(1000))
