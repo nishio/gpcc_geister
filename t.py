@@ -123,7 +123,7 @@ def do_move(game, side, move, show_detail=False):
     return Game.by_val(side, me, op)
 
 
-def print_board(view):
+def print_view(view):
     ret = ['.'] * (BOARD_WIDTH * BOARD_WIDTH)
     for pos in view.get_blue():
         if pos != IS_DEAD:
@@ -193,44 +193,46 @@ class Random(AI):
 
 
 def is_blue(i):
-    return i < NUM_GEISTER / 4
+    return i < NUM_GEISTER / 2
 
 def is_red(i): return not is_blue(i)
 
 class Fastest(AI):
     "自分のゴールインまでの手数を短くする"
-    def choice(self, board):
-        moves = find_possible_move(board)
+    def choice(self, view):
+        moves = find_possible_move(view)
         if moves[0][1] == WIN: return moves[0]
         scored_moves = defaultdict(list)
+        def calc_dist(pos):
+            x, y = to_xy(pos)
+            return y + min(x, 3 - x)
+
         for move in moves:
             # 勝てるなら勝つ
             if move[1] == WIN: return move
             i, d = move
-            if is_red(i): continue
-            # 本当は正確には「自分の駒が道を塞いでいる」効果を求めるために
-            # きちんと最短パスを計算するべきだが、このAIでは省略
-
-            def calc_dist(pos):
-                x, y = to_xy(pos)
-                return y + min(x, 3 - x)
-
-            blue = get_my_blue(g)
-            blue[i] += d
-            dist = min(calc_dist(pos) for pos in blue)
-            #print "dist", move, dist
+            if is_red(i):
+                dist = 1000
+                # 本当は正確には「自分の駒が道を塞いでいる」効果を求めるために
+                # きちんと最短パスを計算するべきだが、このAIでは省略
+            else:
+                blue = view.get_blue()
+                blue[i] += d
+                dist = min(calc_dist(pos) for pos in blue)
+                #print "dist", move, dist
             scored_moves[dist].append(move)
+        #print scored_moves
         return choice(scored_moves[min(scored_moves)])
 
 class FastestP(AI):
     "epsilon greedy"
     def __init__(self, p):
         self.p = p
-    def choice(self, board):
-        moves = find_possible_move(board)
+    def choice(self, view):
+        moves = find_possible_move(view)
         if random() < self.p:
             return choice(moves)
-        return Fastest().choice(board)
+        return Fastest().choice(view)
 
 
 MAX_TURNS = 300
@@ -242,34 +244,79 @@ def match(p1, p2, show_detail=True, record=True):
         v = g.to_view(0)
         if show_detail:
             print p1
-            print_board(v)
+            print_view(v)
         move = p1.choice(v)
         #print move
         g = do_move(g, 0, move)
         if g == WIN: return WIN
         if g == LOSE: return LOSE
         if show_detail:
-            print_board(v)
+            v = g.to_view(0)
+            print_view(v)
 
         v = g.to_view(1)
         if show_detail:
             print p2
-            print_board(v)
+            print_view(v)
         move = p2.choice(v)
         #print move
         g = do_move(g, 1, move)
         if g == WIN: return LOSE
         if g == LOSE: return WIN
         if show_detail:
-            print_board(v)
+            v = g.to_view(1)
+            print_view(v)
 
     return EVEN
 
 
-while True:
-    print match(Random(), Random())
+def foo(p1, p2, show_detail=True):
+    g = Game()
+    v_prev = g.to_view(1)
 
-#print Counter(match(Random(), Fastest()) for x in range(1000))
-#print Counter(match(Fastest(), Random()) for x in range(1000))
+    v = g.to_view(0)
+    if show_detail:
+        print p1
+        print_view(v)
+    move = p1.choice(v)
 
-#match(Fastest(), FastestP(p=0.1))
+    g = do_move(g, 0, move)
+    if g == WIN: return WIN
+    if g == LOSE: return LOSE
+    if show_detail:
+        print move
+        v = g.to_view(0)
+        print_view(v)
+
+    v = g.to_view(1)
+    print_view(v_prev)
+
+    stat = defaultdict(str)
+    for i in range(1000):
+        alive = copy(v_prev.alive)
+        shuffle(alive)
+        split = 4 - v_prev.dead_blue
+        blue = alive[:split] + [IS_DEAD] * v_prev.dead_blue
+        red = alive[split:] + [IS_DEAD] * v_prev.dead_red
+        vg = Game.by_val(1, v_prev.me, blue + red)
+
+        v2 = vg.to_view(0)
+        move2 = p1.choice(v2)
+        vg = do_move(vg, 0, move2)
+
+        alive1 = list(sorted(vg.to_view(1).alive))
+        alive2 = list(sorted(v.alive))
+        if alive1 == alive2:
+            #print_view(vg.to_view(0))
+            for x in blue:
+                stat[x] += 'o'
+            for x in red:
+                stat[x] += 'x'
+
+    for k in stat:
+        print k, stat[k].count('o') / float(len(stat[k]))
+
+    print_view(v)
+
+
+foo(Fastest(), Fastest())
