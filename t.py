@@ -74,6 +74,9 @@ class Game(object):
     @staticmethod
     def by_val(side, me, op):
         self = Game()
+        return self.set_val(side, me, op)
+
+    def set_val(self, side, me, op):
         if side == 0:
             self.val = (me, op)
         else:
@@ -81,6 +84,7 @@ class Game(object):
                 Game.rotate(op),
                 Game.rotate(me))
         return self
+
 
 def get_blue(val):
     return val[:NUM_GEISTER / 2]
@@ -102,6 +106,7 @@ class View(object):
     def get_red(self):
         return get_red(self.me)
 
+@profile
 def do_move(game, side, move, show_detail=False):
     me, op = game.get_rotated(side)  # copied
     i, d = move
@@ -120,7 +125,8 @@ def do_move(game, side, move, show_detail=False):
 
     me[i] = newpos
     if show_detail: print board
-    return Game.by_val(side, me, op)
+    #return Game.by_val(side, me, op)
+    return game.set_val(side, me, op)
 
 
 def print_view(view):
@@ -293,12 +299,7 @@ def foo(p1, p2, show_detail=True):
 
     stat = defaultdict(str)
     for i in range(1000):
-        alive = copy(v_prev.alive)
-        shuffle(alive)
-        split = 4 - v_prev.dead_blue
-        blue = alive[:split] + [IS_DEAD] * v_prev.dead_blue
-        red = alive[split:] + [IS_DEAD] * v_prev.dead_red
-        vg = Game.by_val(1, v_prev.me, blue + red)
+        vg = make_virtual_game(v_prev, 1)
 
         v2 = vg.to_view(0)
         move2 = p1.choice(v2)
@@ -319,4 +320,64 @@ def foo(p1, p2, show_detail=True):
     print_view(v)
 
 
-foo(Fastest(), Fastest())
+@profile
+def make_virtual_game(v, side):
+    """
+    given a view, return a game
+    filling opponent's invisible ghost randomly
+    """
+    alive = copy(v.alive)
+    shuffle(alive)
+    split = 4 - v.dead_blue
+    blue = alive[:split] + [IS_DEAD] * v.dead_blue
+    red = alive[split:] + [IS_DEAD] * v.dead_red
+    vg = Game.by_val(side, v.me, blue + red)
+    return vg
+
+
+class Montecarlo(AI):
+    "モンテカルロ"
+    @profile
+    def choice(self, view):
+        side = 0
+        moves = find_possible_move(view)
+        if moves[0][1] == WIN: return moves[0]
+        score = defaultdict(int)
+
+        for move in moves:
+            # 勝てるなら勝つ
+            if move[1] == WIN: return move
+            for i in range(10):
+                g = make_virtual_game(view, side)
+                g = do_move(g, side, move)
+                x = random_playout(g, 1 - side)
+                if x == LOSE: score[move] += 1
+                if x == WIN: score[move] -= 1
+
+        best = list(sorted((score[move], move) for move in score))[-1]
+        return best[1]
+
+
+@profile
+def random_playout(g, side):
+    if g == WIN: return LOSE
+    if g == LOSE: return WIN
+    random = Random()
+    for i in range(MAX_TURNS):
+        v = g.to_view(side)
+        move = random.choice(v)
+        #print move
+        g = do_move(g, side, move)
+        if g == WIN: return WIN
+        if g == LOSE: return LOSE
+
+        v = g.to_view(1 - side)
+        move = random.choice(v)
+        #print move
+        g = do_move(g, 1 - side, move)
+        if g == WIN: return LOSE
+        if g == LOSE: return WIN
+
+    return EVEN
+
+print Counter(match(Montecarlo(), Random(), False) for i in range(1))
