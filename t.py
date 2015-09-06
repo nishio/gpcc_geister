@@ -50,21 +50,19 @@ def choose_four_red_ghosts_randomly():
 
 def make_colormap(reds):
     """
-    >>> make_colormap("cdef")
+    >>> make_colormap("cdef") == {'a': 'B', 'e': 'R', 'g': 'B', 'b': 'B', 'd': 'R', 'c': 'R', 'f': 'R', 'h': 'B'}
+    True
     """
     color_map = dict(zip(names, "BBBBBBBB"))
     color_map.update(dict(zip(reds, "RRRR")))
     return color_map
 
 
-def get_stub_colormap():
-    """
-    >>> seed(1234)
-    >>> get_stub_colormap()['a']
-    'B'
-    """
+def get_test_colormap():
+    seed(1234)
     reds = choose_four_red_ghosts_randomly()
     return make_colormap(reds)
+TEST_COLORMAP = get_test_colormap()
 
 
 def is_dead(pos):
@@ -164,7 +162,7 @@ def take_positions_of_my_ghosts(positions):
     return positions[8:]
 
 
-def possible_moves(positions, colormap=get_stub_colormap()):
+def possible_moves(positions, colormap=TEST_COLORMAP):
     """
     >>> possible_moves(board_to_positions(TEST_BOARD))
     [((1, 4), 'N'), ((1, 4), 'W'), ((2, 4), 'N'), ((3, 4), 'N'), ((4, 4), 'N'), ((4, 4), 'E'), ((1, 5), 'W'), ((4, 5), 'E')]
