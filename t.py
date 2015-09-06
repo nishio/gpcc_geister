@@ -22,6 +22,7 @@ s.close()
 
 from random import seed
 names = "abcdefgh"
+FULL_NAMES = "ABCDEFGHabcdefgh"
 NOWHERE = (-1, -1)
 BOARD_WIDTH = 6
 
@@ -65,15 +66,35 @@ def get_test_colormap():
 TEST_COLORMAP = get_test_colormap()
 
 
-def is_dead(pos):
-    return (pos == NOWHERE)
+"""
+is_pair_of_int > is_pos = (is_in_board + is_dead)
+"""
+def assert_is_pair_of_int(p):
+    assert isinstance(p, tuple) and len(p) == 2
+    x, y = p
+    assert isinstance(x, int) and isinstance(y, int)
 
 
-def assert_is_pos(pos):
-    if is_dead(pos): return
-    x, y = pos
-    assert 0 <= x < 6
-    assert 0 <= y < 6
+def is_in_board(p):
+    assert_is_pair_of_int(p)
+    x, y = p
+    if x < 0: return False
+    if 5 < x: return False
+    if y < 0: return False
+    if 5 < y: return False
+    return True
+
+
+def is_dead(p):
+    assert_is_pair_of_int(p)
+    return (p == NOWHERE)
+
+
+def assert_is_pos(p):
+    assert_is_pair_of_int(p)
+    if is_dead(p): return
+    x, y = p
+    assert is_in_board(p)
 
 
 def is_near_goal(pos):
@@ -82,10 +103,13 @@ def is_near_goal(pos):
     if pos == (5, 0): return True
     return False
 
+def assert_is_ghost(x):
+    assert isinstance(x, Ghost)
 
-def enter_goal(pos):
-    assert is_near_goal(pos)
-    x, y = pos
+def enter_goal(ghost):
+    assert_is_ghost(ghost)
+    assert is_near_goal(ghost.pos)
+    x, y = ghost.pos
     if x == 0: return (-1, 0)
     if x == 5: return (1, 0)
     raise AssertionError('not here')
@@ -118,9 +142,10 @@ def go_ahead(pos):
 
 def board_to_positions(board):
     """
-    >>> board_to_positions(TEST_BOARD)
+    #>>> board_to_positions(TEST_BOARD)
     [(4, 1), (3, 1), (2, 1), (1, 1), (4, 0), (3, 0), (2, 0), (1, 0), (1, 4), (2, 4), (3, 4), (4, 4), (1, 5), (2, 5), (3, 5), (4, 5)]
     """
+    raise AssertionError('obsolete')
     ret = []
     for c in 'abcdefghABCDEFGH':
         pos = board.find(c)
@@ -144,29 +169,21 @@ def four_moves_from(pos):
             ((x, y + 1), 'S'), ((x - 1, y), 'W')]
 
 
-def is_in_board(pos):
-    assert isinstance(pos, tuple)
-    x, y = pos
-    if x < 0: return False
-    if 5 < x: return False
-    if y < 0: return False
-    if 5 < y: return False
-    return True
-
-
 def occupied_by_my_ghost(pos, mypos):
     return pos in mypos
 
 
 def take_positions_of_my_ghosts(positions):
+    raise AssertionError('obsolete')
     return positions[8:]
 
 
 def possible_moves(positions, colormap=TEST_COLORMAP):
     """
-    >>> possible_moves(board_to_positions(TEST_BOARD))
+    #>>> possible_moves(board_to_positions(TEST_BOARD))
     [((1, 4), 'N'), ((1, 4), 'W'), ((2, 4), 'N'), ((3, 4), 'N'), ((4, 4), 'N'), ((4, 4), 'E'), ((1, 5), 'W'), ((4, 5), 'E')]
     """
+    raise AssertionError('obsolete')
     my_positions = take_positions_of_my_ghosts(positions)
     ret = []
     for name, pos in zip(names, my_positions):
@@ -194,6 +211,88 @@ class RandomAI(object):
         from random import choice
         moves = possible_moves(board, self.colormap)
         return choice(moves)
+
+
+from collections import namedtuple
+Ghost = namedtuple("Ghost", "name pos color")
+
+TEST_GHOSTS = [Ghost('A', (1, 4), 'R'), Ghost('B', (2, 4), 'R'), Ghost('C', (3, 4), 'R'), Ghost('D', (4, 4), 'R'), Ghost('E', (1, 5), 'B'), Ghost('F', (2, 5), 'B'), Ghost('G', (3, 5), 'B'), Ghost('H', (4, 5), 'B'), Ghost('a', (4, 1), 'u'), Ghost('b', (3, 1), 'u'), Ghost('c', (2, 1), 'u'), Ghost('d', (1, 1), 'u'), Ghost('e', (4, 0), 'u'), Ghost('f', (3, 0), 'u'), Ghost('g', (2, 0), 'u'), Ghost('h', (1, 0), 'u')]
+TEST_MESSAGE = "14R24R34R44R15B25B35B45B41u31u21u11u40u30u20u10u"
+def message_to_ghosts(message):
+    """
+    >>> message_to_ghosts(TEST_MESSAGE) == TEST_GHOSTS
+    True
+    """
+    assert len(message) == 48
+    ghosts = []
+    for i in range(16):
+        c1, c2, c3 = message[i * 3:i * 3 + 3]
+        name = FULL_NAMES[i]
+        pos = (int(c1), int(c2))
+        color = c3
+        ghosts.append(Ghost(name, pos, color))
+    return ghosts
+
+
+def take_my_ghosts(ghosts):
+    return ghosts[:8]
+
+
+def is_blue(ghost):
+    return ghost.color == 'B' or ghost.color == 'b'
+
+
+def test1():
+    """
+    >>> test1()
+    """
+    message = TEST_MESSAGE
+    ghosts = message_to_ghosts(message)
+
+
+TEST_GHOSTS = message_to_ghosts(TEST_MESSAGE)
+def possible_moves(ghosts):
+    """
+    >>> moves = possible_moves(TEST_GHOSTS)
+    >>> moves[0]
+    (Ghost(name='A', pos=(1, 4), color='R'), 'N')
+    >>> [move_to_str(m) for m in moves]
+    ['AN', 'AW', 'BN', 'CN', 'DN', 'DE', 'EW', 'HE']
+    """
+    my_ghosts = take_my_ghosts(ghosts)
+
+    ret = []
+    for ghost in my_ghosts:
+        pos = ghost.pos
+        color = ghost.color
+        if is_dead(pos): continue
+        if is_near_goal(pos):
+            if is_blue(ghost):
+                return [enter_goal(ghost)]
+
+        occupied = [x.pos for x in my_ghosts]
+        for newpos, move in four_moves_from(pos):
+            if is_in_board(newpos):
+                if not occupied_by_my_ghost(newpos, occupied):
+                    ret.append((ghost, move))
+
+    return ret
+
+
+def assert_is_direction(x):
+    assert x in "NEWS"
+
+
+def move_to_str(move):
+    """
+    >>> move_to_str((Ghost("A", (0, 0), "B"), "N"))
+    'AN'
+    """
+    assert isinstance(move, tuple) and len(move) == 2
+    ghost, direction = move
+    assert_is_ghost(ghost)
+    assert_is_direction(direction)
+    return "{}{}".format(ghost.name, direction)
 
 
 def _test():
