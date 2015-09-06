@@ -103,8 +103,10 @@ def is_near_goal(pos):
     if pos == (5, 0): return True
     return False
 
+
 def assert_is_ghost(x):
     assert isinstance(x, Ghost)
+
 
 def enter_goal(ghost):
     assert_is_ghost(ghost)
@@ -140,23 +142,6 @@ def go_ahead(pos):
     return candidates
 
 
-def board_to_positions(board):
-    """
-    #>>> board_to_positions(TEST_BOARD)
-    [(4, 1), (3, 1), (2, 1), (1, 1), (4, 0), (3, 0), (2, 0), (1, 0), (1, 4), (2, 4), (3, 4), (4, 4), (1, 5), (2, 5), (3, 5), (4, 5)]
-    """
-    raise AssertionError('obsolete')
-    ret = []
-    for c in 'abcdefghABCDEFGH':
-        pos = board.find(c)
-        if pos == -1:
-            ret.append(NOWHERE)
-        y = pos // (BOARD_WIDTH + 1)
-        x = pos % (BOARD_WIDTH + 1)
-        ret.append((x, y))
-    return ret
-
-
 def four_moves_from(pos):
     """
     >>> four_moves_from((0, 0))
@@ -171,34 +156,6 @@ def four_moves_from(pos):
 
 def occupied_by_my_ghost(pos, mypos):
     return pos in mypos
-
-
-def take_positions_of_my_ghosts(positions):
-    raise AssertionError('obsolete')
-    return positions[8:]
-
-
-def possible_moves(positions, colormap=TEST_COLORMAP):
-    """
-    #>>> possible_moves(board_to_positions(TEST_BOARD))
-    [((1, 4), 'N'), ((1, 4), 'W'), ((2, 4), 'N'), ((3, 4), 'N'), ((4, 4), 'N'), ((4, 4), 'E'), ((1, 5), 'W'), ((4, 5), 'E')]
-    """
-    raise AssertionError('obsolete')
-    my_positions = take_positions_of_my_ghosts(positions)
-    ret = []
-    for name, pos in zip(names, my_positions):
-        color = colormap[name]
-        if is_dead(pos): continue
-        if is_near_goal(pos):
-            if is_blue(pos):
-                return [enter_goal(pos)]
-
-        for newpos, move in four_moves_from(pos):
-            if is_in_board(newpos):
-                if not occupied_by_my_ghost(newpos, my_positions):
-                    ret.append((pos, move))
-
-    return ret
 
 
 class RandomAI(object):
