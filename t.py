@@ -10,9 +10,7 @@ parser.add_argument("-p", "--port", default=10000)
 parser.add_argument("-s", "--server", default="localhost")
 parser.add_argument("--endless-test", action='store_true')
 parser.add_argument("-t", "--test", action='store_true')
-
 args = parser.parse_args()
-print(args)
 
 from random import seed
 names = "abcdefgh"
@@ -266,27 +264,19 @@ def connect_server():
     reds = p.choose_red_ghosts()
     reds = ''.join(reds).upper()
     msg = "SET:{}\r\n".format(reds)
-    print msg
     s.send(msg)
 
     while True:
         data = s.recv(1024)
-        print data
-
         if not data.startswith('MOV?'):
-            print data
+            assert any(data.startswith(x) for x in ["WIN", "LST", "DRW"])
             break
 
         msg = data[4:]
-        print msg
-        print len(msg)
         if len(msg) > 48: msg = msg[:48]
         ghosts = message_to_ghosts(msg)
         move = p.choose_next_move(ghosts)
-        print move
-        print move_to_str(move)
         msg = "MOV:{}\r\n".format(move_to_str(move))
-        print msg
         s.send(msg)
     s.close()
 
@@ -294,11 +284,14 @@ def connect_server():
 def endless_random_test():
     "ipython -i -mpdb t.py"
     import subprocess
+    import os
+
+    FNULL = open(os.devnull, 'w')
     while True:
         subprocess.Popen(
             "cd ../geister_server.java;"
             " java -cp build/libs/geister.jar net.wasamon.geister.player.RandomPlayer localhost 10001"
-            " &> /dev/null", shell=True)
+            " &> /dev/null", shell=True, stdout=FNULL, stderr=FNULL)
         connect_server()
 
 
