@@ -192,7 +192,7 @@ def is_blue(ghost):
 def test1():
     """
     >>> test1()
-    'AN'
+    'A,N'
     """
     message = TEST_MESSAGE
     ghosts = message_to_ghosts(message)
@@ -208,7 +208,7 @@ def possible_moves(ghosts):
     >>> moves[0]
     (Ghost(name='A', pos=(1, 4), color='R'), 'N')
     >>> [move_to_str(m) for m in moves]
-    ['AN', 'AW', 'BN', 'CN', 'DN', 'DE', 'EW', 'HE']
+    ['A,N', 'A,W', 'B,N', 'C,N', 'D,N', 'D,E', 'E,W', 'H,E']
     """
     my_ghosts = take_my_ghosts(ghosts)
 
