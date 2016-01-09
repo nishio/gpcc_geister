@@ -156,7 +156,7 @@ class RandomAI(object):
 
     def choose_next_move(self, board):
         from random import choice
-        moves = possible_moves(board, self.colormap)
+        moves = possible_moves(board)
         return choice(moves)
 
 
@@ -271,6 +271,9 @@ def connect_server():
             break
 
         msg = data[4:]
+        print msg
+        print len(msg)
+        if len(msg) > 48: msg = msg[:48]
         ghosts = message_to_ghosts(msg)
         move = p.choose_next_move(ghosts)
         print move
