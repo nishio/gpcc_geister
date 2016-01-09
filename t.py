@@ -327,6 +327,17 @@ class FastestAI(AI):
         return choice(scored_moves[min(scored_moves)])
 
 
+class EpsilonFastestAI(AI):
+    "epsilon greedy"
+    def __init__(self, p=0.5):
+        self.p = p
+    def choice(self, ghosts):
+        moves = possible_moves(ghosts)
+        if random() < self.p:
+            return choice(moves)
+        return Fastest.choice(self, ghosts)
+
+
 def is_blue(ghost):
     return ghost.color == 'B' or ghost.color == 'b'
 
