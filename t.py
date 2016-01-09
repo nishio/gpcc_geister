@@ -149,18 +149,6 @@ def occupied_by_my_ghost(pos, mypos):
     return pos in mypos
 
 
-class RandomAI(object):
-    def choose_red_ghosts(self):
-        reds = choose_four_red_ghosts_randomly()
-        self.colormap = make_colormap(reds)
-        return reds
-
-    def choose_next_move(self, board):
-        from random import choice
-        moves = possible_moves(board)
-        return choice(moves)
-
-
 from collections import namedtuple
 Ghost = namedtuple("Ghost", "name pos color")
 
@@ -184,10 +172,6 @@ def message_to_ghosts(message):
 
 def take_my_ghosts(ghosts):
     return ghosts[:8]
-
-
-def is_blue(ghost):
-    return ghost.color == 'B' or ghost.color == 'b'
 
 
 def test1():
@@ -298,6 +282,30 @@ def endless_random_test():
 def _test():
     import doctest
     doctest.testmod()
+
+
+class AI(object):
+    def __repr__(self):
+        return self.__class__.__name__
+
+
+class RandomAI(AI):
+    def choose_red_ghosts(self):
+        reds = choose_four_red_ghosts_randomly()
+        return reds
+
+    def choose_next_move(self, ghosts):
+        from random import choice
+        moves = possible_moves(ghosts)
+        return choice(moves)
+
+
+def is_blue(ghost):
+    return ghost.color == 'B' or ghost.color == 'b'
+
+
+def is_red(ghost):
+    return ghost.color == 'R' or ghost.color == 'r'
 
 
 if __name__ == "__main__":
