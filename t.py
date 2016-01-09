@@ -269,7 +269,7 @@ def connect_server():
     while True:
         data = s.recv(1024)
         if not data.startswith('MOV?'):
-            assert any(data.startswith(x) for x in ["WIN", "LST", "DRW"])
+            assert any(data.startswith(x) for x in ["WON", "LST", "DRW"])
             break
 
         msg = data[4:]
