@@ -4,9 +4,12 @@ Sample client
 """
 
 import argparse
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--port", default=10000)
 parser.add_argument("-s", "--server", default="localhost")
+parser.add_argument("--endless-test", action='store_true')
+parser.add_argument("-t", "--test", action='store_true')
 
 args = parser.parse_args()
 print(args)
@@ -302,9 +305,12 @@ def endless_random_test():
 def _test():
     import doctest
     doctest.testmod()
-    if 1:
-        endless_random_test()
 
 
 if __name__ == "__main__":
-    _test()
+    if args.test:
+        _test()
+    elif args.endless_test:
+        endless_random_test()
+    else:
+        connect_server()
