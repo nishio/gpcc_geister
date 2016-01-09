@@ -36,12 +36,11 @@ TEST_BOARD = """
 """.strip()
 
 
-
 def choose_four_red_ghosts_randomly():
     """choose 4 red ghosts randomly
     >>> seed(1234)
     >>> choose_four_red_ghosts_randomly()
-    ['b', 'd', 'c', 'e']
+    ['f', 'c', 'b', 'g']
     """
     from random import shuffle
     xs = list(names)
@@ -202,9 +201,13 @@ def is_blue(ghost):
 def test1():
     """
     >>> test1()
+    'AN'
     """
     message = TEST_MESSAGE
     ghosts = message_to_ghosts(message)
+    moves = possible_moves(ghosts)
+    move = moves[0]
+    return move_to_str(move)
 
 
 TEST_GHOSTS = message_to_ghosts(TEST_MESSAGE)
