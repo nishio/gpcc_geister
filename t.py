@@ -102,8 +102,8 @@ def enter_goal(ghost):
     assert_is_ghost(ghost)
     assert is_near_goal(ghost.pos)
     x, y = ghost.pos
-    if x == 0: return (-1, 0)
-    if x == 5: return (1, 0)
+    if x == 0: return (ghost, 'W')
+    if x == 5: return (ghost, 'E')
     raise AssertionError('not here')
 
 
@@ -239,11 +239,16 @@ def move_to_str(move):
     >>> move_to_str((Ghost("A", (0, 0), "B"), "N"))
     'A,N'
     """
+    assert_is_move(move)
+    ghost, direction = move
+    return "{},{}".format(ghost.name, direction)
+
+
+def assert_is_move(move):
     assert isinstance(move, tuple) and len(move) == 2
     ghost, direction = move
     assert_is_ghost(ghost)
     assert_is_direction(direction)
-    return "{},{}".format(ghost.name, direction)
 
 
 def connect_server():
