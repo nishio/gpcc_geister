@@ -3,22 +3,13 @@
 Sample client
 """
 
-"""
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument("-p", "--port")
+parser.add_argument("-p", "--port", default=10000)
 parser.add_argument("-s", "--server", default="localhost")
 
 args = parser.parse_args()
 print(args)
-
-
-s = socket.socket(sicket.AF_INET, socket.SOCK_STREAM)
-s.connect((args.SERVER, args.PORT))
-s.sendall(b'hoge')
-data = s.recv(1024)
-s.close()
-"""
 
 from random import seed
 names = "abcdefgh"
@@ -246,19 +237,59 @@ def assert_is_direction(x):
 def move_to_str(move):
     """
     >>> move_to_str((Ghost("A", (0, 0), "B"), "N"))
-    'AN'
+    'A,N'
     """
     assert isinstance(move, tuple) and len(move) == 2
     ghost, direction = move
     assert_is_ghost(ghost)
     assert_is_direction(direction)
-    return "{}{}".format(ghost.name, direction)
+    return "{},{}".format(ghost.name, direction)
 
+
+def connect_server():
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((args.server, int(args.port)))
+    data = s.recv(1024)
+    print data
+
+    seed(1234)
+    p = RandomAI()
+    reds = p.choose_red_ghosts()
+    reds = ''.join(reds).upper()
+    # FCBG
+    msg = "SET:{}\r\n".format(reds)
+    print msg
+    s.send(msg)
+
+    while True:
+        data = s.recv(1024)
+        print data
+
+        if not data.startswith('MOV?'):
+            print data
+            break
+
+        msg = data[4:]
+        ghosts = message_to_ghosts(msg)
+        move = p.choose_next_move(ghosts)
+        print move
+        print move_to_str(move)
+        msg = "MOV:{}\r\n".format(move_to_str(move))
+        print msg
+        s.send(msg)
+
+    #s.close()
 
 def _test():
     import doctest
     doctest.testmod()
-
-
+    if 1:
+        connect_server()
+    else:
+        seed(1234)
+        p = RandomAI()
+        reds = p.choose_red_ghosts()
+        print ''.join(reds).upper()
 if __name__ == "__main__":
     _test()
