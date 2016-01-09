@@ -12,7 +12,7 @@ parser.add_argument("--endless-test", action='store_true')
 parser.add_argument("-t", "--test", action='store_true')
 args = parser.parse_args()
 
-from random import seed
+from random import seed, choice
 names = "abcdefgh"
 FULL_NAMES = "ABCDEFGHabcdefgh"
 NOWHERE = (9, 9)
@@ -244,7 +244,7 @@ def connect_server():
     data = s.recv(1024)
     assert data == "SET?\r\n"
 
-    p = RandomAI()
+    p = FastestAI()  # TODO: option
     reds = p.choose_red_ghosts()
     reds = ''.join(reds).upper()
     msg = "SET:{}\r\n".format(reds)
@@ -254,6 +254,8 @@ def connect_server():
         data = s.recv(1024)
         if not data.startswith('MOV?'):
             assert any(data.startswith(x) for x in ["WON", "LST", "DRW"])
+            if True:  # TODO: option
+                print data[:3]
             break
 
         msg = data[4:]
@@ -300,12 +302,49 @@ class RandomAI(AI):
         return choice(moves)
 
 
+class FastestAI(AI):
+    "自分のゴールインまでの手数を短くする"
+    def choose_red_ghosts(self):
+        reds = choose_four_red_ghosts_randomly()
+        return reds
+
+    def choose_next_move(self, ghosts):
+        moves = possible_moves(ghosts)
+        from collections import defaultdict
+        scored_moves = defaultdict(list)
+        def calc_dist(pos):
+            x, y = pos
+            return y + min(x, 3 - x)
+
+        for move in moves:
+            ghost, d = move
+            if is_red(ghost):
+                dist = 1000
+            else:
+                newpos = calc_new_pos(ghost.pos, d)
+                dist = calc_dist(newpos)
+            scored_moves[dist].append(move)
+        return choice(scored_moves[min(scored_moves)])
+
+
 def is_blue(ghost):
     return ghost.color == 'B' or ghost.color == 'b'
 
 
 def is_red(ghost):
     return ghost.color == 'R' or ghost.color == 'r'
+
+
+def calc_new_pos(pos, direction):
+    if direction == 'N':
+        return (pos[0], pos[1] - 1)
+    if direction == 'E':
+        return (pos[0] + 1, pos[1])
+    if direction == 'W':
+        return (pos[0], pos[1] + 1)
+    if direction == 'S':
+        return (pos[0] - 1, pos[1])
+    raise AssertionError('not here')
 
 
 if __name__ == "__main__":
