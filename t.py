@@ -14,7 +14,7 @@ print(args)
 from random import seed
 names = "abcdefgh"
 FULL_NAMES = "ABCDEFGHabcdefgh"
-NOWHERE = (-1, -1)
+NOWHERE = (9, 9)
 BOARD_WIDTH = 6
 
 TEST_BOARD = """
