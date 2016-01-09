@@ -255,14 +255,13 @@ def connect_server():
     import socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((args.server, int(args.port)))
-    data = s.recv(1024)
-    print data
 
-    seed(1234)
+    data = s.recv(1024)
+    assert data == "SET?\r\n"
+
     p = RandomAI()
     reds = p.choose_red_ghosts()
     reds = ''.join(reds).upper()
-    # FCBG
     msg = "SET:{}\r\n".format(reds)
     print msg
     s.send(msg)
@@ -286,18 +285,26 @@ def connect_server():
         msg = "MOV:{}\r\n".format(move_to_str(move))
         print msg
         s.send(msg)
+    s.close()
 
-    #s.close()
+
+def endless_random_test():
+    "ipython -i -mpdb t.py"
+    import subprocess
+    while True:
+        subprocess.Popen(
+            "cd ../geister_server.java;"
+            " java -cp build/libs/geister.jar net.wasamon.geister.player.RandomPlayer localhost 10001"
+            " &> /dev/null", shell=True)
+        connect_server()
+
 
 def _test():
     import doctest
     doctest.testmod()
     if 1:
-        connect_server()
-    else:
-        seed(1234)
-        p = RandomAI()
-        reds = p.choose_red_ghosts()
-        print ''.join(reds).upper()
+        endless_random_test()
+
+
 if __name__ == "__main__":
     _test()
