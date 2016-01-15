@@ -57,15 +57,6 @@ def get_test_colormap():
 TEST_COLORMAP = get_test_colormap()
 
 
-"""
-is_pair_of_int > is_pos = (is_in_board + is_dead)
-"""
-def assert_is_pair_of_int(p):
-    assert isinstance(p, tuple) and len(p) == 2
-    x, y = p
-    assert isinstance(x, int) and isinstance(y, int)
-
-
 def is_in_board(p):
     assert_is_pair_of_int(p)
     x, y = p
@@ -74,18 +65,6 @@ def is_in_board(p):
     if y < 0: return False
     if 5 < y: return False
     return True
-
-
-def is_dead(p):
-    assert_is_pair_of_int(p)
-    return (p == NOWHERE)
-
-
-def assert_is_pos(p):
-    assert_is_pair_of_int(p)
-    if is_dead(p): return
-    x, y = p
-    assert is_in_board(p)
 
 
 def is_near_goal(pos):
@@ -133,18 +112,6 @@ def go_ahead(pos):
     return candidates
 
 
-def four_moves_from(pos):
-    """
-    >>> four_moves_from((0, 0))
-    [((0, -1), 'N'), ((1, 0), 'E'), ((0, 1), 'S'), ((-1, 0), 'W')]
-    """
-    assert_is_pos(pos)
-    assert not(is_dead(pos))
-    x, y = pos
-    return [((x, y - 1), 'N'), ((x + 1, y), 'E'),
-            ((x, y + 1), 'S'), ((x - 1, y), 'W')]
-
-
 def occupied_by_my_ghost(pos, mypos):
     return pos in mypos
 
@@ -184,35 +151,6 @@ def test1():
     moves = possible_moves(ghosts)
     move = moves[0]
     return move_to_str(move)
-
-
-TEST_GHOSTS = message_to_ghosts(TEST_MESSAGE)
-def possible_moves(ghosts):
-    """
-    >>> moves = possible_moves(TEST_GHOSTS)
-    >>> moves[0]
-    (Ghost(name='A', pos=(1, 4), color='R'), 'N')
-    >>> [move_to_str(m) for m in moves]
-    ['A,N', 'A,W', 'B,N', 'C,N', 'D,N', 'D,E', 'E,W', 'H,E']
-    """
-    my_ghosts = take_my_ghosts(ghosts)
-
-    ret = []
-    for ghost in my_ghosts:
-        pos = ghost.pos
-        color = ghost.color
-        if is_dead(pos): continue
-        if is_near_goal(pos):
-            if is_blue(ghost):
-                return [enter_goal(ghost)]
-
-        occupied = [x.pos for x in my_ghosts]
-        for newpos, move in four_moves_from(pos):
-            if is_in_board(newpos):
-                if not occupied_by_my_ghost(newpos, occupied):
-                    ret.append((ghost, move))
-
-    return ret
 
 
 def assert_is_direction(x):
@@ -423,15 +361,72 @@ class HumanAI(AI):
             x, y = pos
             return y + min(x, 3 - x)
 
-        for move in moves:
-            ghost, d = move
-            if is_red(ghost):
-                dist = 1000
-            else:
-                newpos = calc_new_pos(ghost.pos, d)
-                dist = calc_dist(newpos)
-            scored_moves[dist].append(move)
-        return choice(scored_moves[min(scored_moves)])
+
+def is_dead_pos(p):
+    assert_is_pair_of_int(p)
+    return (p == NOWHERE)
+
+
+def is_dead(g):
+    assert_is_ghost(g)
+    return (g.pos == NOWHERE)
+
+
+"""
+is_pair_of_int > is_pos = (is_in_board + is_dead_pos)
+"""
+def assert_is_pair_of_int(p):
+    assert isinstance(p, tuple) and len(p) == 2
+    x, y = p
+    assert isinstance(x, int) and isinstance(y, int)
+
+
+def assert_is_pos(p):
+    assert_is_pair_of_int(p)
+    if is_dead_pos(p): return
+    x, y = p
+    assert is_in_board(p)
+
+
+def four_moves_from(pos):
+    """
+    >>> four_moves_from((0, 0))
+    [((0, -1), 'N'), ((1, 0), 'E'), ((0, 1), 'S'), ((-1, 0), 'W')]
+    """
+    assert_is_pos(pos)
+    assert is_in_board(pos)
+    x, y = pos
+    return [((x, y - 1), 'N'), ((x + 1, y), 'E'),
+            ((x, y + 1), 'S'), ((x - 1, y), 'W')]
+
+
+TEST_GHOSTS = message_to_ghosts(TEST_MESSAGE)
+def possible_moves(ghosts):
+    """
+    >>> moves = possible_moves(TEST_GHOSTS)
+    >>> moves[0]
+    (Ghost(name='A', pos=(1, 4), color='R'), 'N')
+    >>> [move_to_str(m) for m in moves]
+    ['A,N', 'A,W', 'B,N', 'C,N', 'D,N', 'D,E', 'E,W', 'H,E']
+    """
+    my_ghosts = take_my_ghosts(ghosts)
+
+    ret = []
+    for ghost in my_ghosts:
+        if is_dead(ghost): continue
+        pos = ghost.pos
+        color = ghost.color
+        if is_near_goal(pos):
+            if is_blue(ghost):
+                return [enter_goal(ghost)]
+
+        occupied = [x.pos for x in my_ghosts]
+        for newpos, move in four_moves_from(pos):
+            if is_in_board(newpos):
+                if not occupied_by_my_ghost(newpos, occupied):
+                    ret.append((ghost, move))
+
+    return ret
 
 
 if __name__ == "__main__":
