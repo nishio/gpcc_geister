@@ -209,17 +209,19 @@ def connect_server(ai=None):
     s.close()
 
 
-def endless_random_test():
-    "ipython -i -mpdb t.py"
+def run_random_player():
     import subprocess
     import os
-
     FNULL = open(os.devnull, 'w')
+    subprocess.Popen(
+        "cd ../geister_server.java;"
+        " java -cp build/libs/geister.jar net.wasamon.geister.player.RandomPlayer localhost 10001"
+        " &> /dev/null", shell=True, stdout=FNULL, stderr=FNULL)
+
+
+def endless_random_test():
     while True:
-        subprocess.Popen(
-            "cd ../geister_server.java;"
-            " java -cp build/libs/geister.jar net.wasamon.geister.player.RandomPlayer localhost 10001"
-            " &> /dev/null", shell=True, stdout=FNULL, stderr=FNULL)
+        run_random_player()
         connect_server()
 
 
