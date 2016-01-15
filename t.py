@@ -349,6 +349,19 @@ class TakerAI(AI):
         return choice(scored_moves[min(scored_moves)])
 
 
+def red_string(s):
+    return "\033[041m%s\033[0m" % s
+
+def blue_string(s):
+    return "\033[044m%s\033[0m" % s
+
+def color_ghost_string(g):
+    if is_blue(g):
+        return blue_string(g.name)
+    elif is_red(g):
+        return red_string(g.name)
+    return g.name
+
 class HumanAI(AI):
     "自分のゴールインまでの手数を短くする"
     def choose_red_ghosts(self):
@@ -356,12 +369,26 @@ class HumanAI(AI):
         return reds
 
     def choose_next_move(self, ghosts):
+        print ghosts
+        pos2ghosts = dict((x.pos, x) for x in ghosts)
+        pretty = ""
+        for y in range(6):
+            for x in range(6):
+                g = pos2ghosts.get((x, y))
+                if not g:
+                    pretty += '.'
+                else:
+                    pretty += color_ghost_string(g)
+            pretty += "\n"
+        print pretty
+        print ' '.join(
+            color_ghost_string(g)
+            for g in ghosts
+            if is_dead(g))
+
         moves = possible_moves(ghosts)
-        from collections import defaultdict
-        scored_moves = defaultdict(list)
-        def calc_dist(pos):
-            x, y = pos
-            return y + min(x, 3 - x)
+        raw_input(">>")
+        return choice(moves)
 
 
 def is_dead_pos(p):
