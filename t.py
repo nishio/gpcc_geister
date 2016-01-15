@@ -306,6 +306,31 @@ class RandomAI(AI):
         return choice(moves)
 
 
+class FastestRedAI(AI):
+    "自分のゴールインまでの手数を(赤を青とみなして)短くする"
+    def choose_red_ghosts(self):
+        reds = choose_four_red_ghosts_randomly()
+        return reds
+
+    def choose_next_move(self, ghosts):
+        moves = possible_moves(ghosts)
+        from collections import defaultdict
+        scored_moves = defaultdict(list)
+        def calc_dist(pos):
+            x, y = pos
+            return y + min(x, 3 - x)
+
+        for move in moves:
+            ghost, d = move
+            if is_blue(ghost):
+                dist = 1000
+            else:
+                newpos = calc_new_pos(ghost.pos, d)
+                dist = calc_dist(newpos)
+            scored_moves[dist].append(move)
+        return choice(scored_moves[min(scored_moves)])
+
+
 class FastestAI(AI):
     "自分のゴールインまでの手数を短くする"
     def choose_red_ghosts(self):
@@ -360,6 +385,53 @@ def calc_new_pos(pos, direction):
     if direction == 'S':
         return (pos[0] - 1, pos[1])
     raise AssertionError('not here')
+
+
+class TakerAI(AI):
+    "取れるときには取る"
+    def choose_red_ghosts(self):
+        reds = choose_four_red_ghosts_randomly()
+        return reds
+
+    def choose_next_move(self, ghosts):
+        moves = possible_moves(ghosts)
+        from collections import defaultdict
+        scored_moves = defaultdict(list)
+
+        for move in moves:
+            ghost, d = move
+            if is_red(ghost):
+                dist = 1000
+            else:
+                newpos = calc_new_pos(ghost.pos, d)
+                dist = calc_dist(newpos)
+            scored_moves[dist].append(move)
+        return choice(scored_moves[min(scored_moves)])
+
+
+class HumanAI(AI):
+    "自分のゴールインまでの手数を短くする"
+    def choose_red_ghosts(self):
+        reds = choose_four_red_ghosts_randomly()
+        return reds
+
+    def choose_next_move(self, ghosts):
+        moves = possible_moves(ghosts)
+        from collections import defaultdict
+        scored_moves = defaultdict(list)
+        def calc_dist(pos):
+            x, y = pos
+            return y + min(x, 3 - x)
+
+        for move in moves:
+            ghost, d = move
+            if is_red(ghost):
+                dist = 1000
+            else:
+                newpos = calc_new_pos(ghost.pos, d)
+                dist = calc_dist(newpos)
+            scored_moves[dist].append(move)
+        return choice(scored_moves[min(scored_moves)])
 
 
 if __name__ == "__main__":
