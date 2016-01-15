@@ -9,6 +9,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--port", default=10000)
 parser.add_argument("-s", "--server", default="localhost")
 parser.add_argument("--endless-test", action='store_true')
+parser.add_argument("--connect", action='store_true')
+parser.add_argument("--battle", action='store_true')
+parser.add_argument("--ai", action='store')
 parser.add_argument("-t", "--test", action='store_true')
 args = parser.parse_args()
 
@@ -179,16 +182,21 @@ def assert_is_move(move):
     assert_is_direction(direction)
 
 
-def connect_server(ai=None):
+def connect_server(ai=None, port=None):
     import socket
+    if not port: port = int(args.port)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((args.server, int(args.port)))
+    s.connect((args.server, port))
 
     data = s.recv(1024)
     assert data == "SET?\r\n"
 
-    if ai:
+    if isinstance(ai, str):
+        p = eval(ai)()
+    elif ai:
         p = ai()
+    elif args.ai:
+        p = eval(args.ai)()
     else:
         p = FastestAI()
 
@@ -221,6 +229,15 @@ def run_random_player():
     subprocess.Popen(
         "cd ../geister_server.java;"
         " java -cp build/libs/geister.jar net.wasamon.geister.player.RandomPlayer localhost 10001"
+        " &> /dev/null", shell=True, stdout=FNULL, stderr=FNULL)
+
+
+def run_player():
+    import subprocess
+    import os
+    FNULL = open(os.devnull, 'w')
+    subprocess.Popen(
+        " python t.py --port=10000 --connect --ai={}".format(args.ai) +
         " &> /dev/null", shell=True, stdout=FNULL, stderr=FNULL)
 
 
@@ -343,22 +360,28 @@ class TakerAI(AI):
         from collections import defaultdict
         scored_moves = defaultdict(list)
 
+        pos2ghosts = dict((x.pos, x) for x in ghosts)
         for move in moves:
             ghost, d = move
-            if is_red(ghost):
-                dist = 1000
+            newpos = calc_new_pos(ghost.pos, d)
+            target = pos2ghosts.get(newpos)
+            if not target:
+                scored_moves[999].append(move)
+                continue
+            if target.color == 'u':
+                scored_moves[0].append(move)
             else:
-                newpos = calc_new_pos(ghost.pos, d)
-                dist = calc_dist(newpos)
-            scored_moves[dist].append(move)
+                scored_moves[999].append(move)
         return choice(scored_moves[min(scored_moves)])
 
 
 def red_string(s):
     return "\033[041m%s\033[0m" % s
 
+
 def blue_string(s):
     return "\033[044m%s\033[0m" % s
+
 
 def color_ghost_string(g):
     if is_blue(g):
@@ -366,6 +389,7 @@ def color_ghost_string(g):
     elif is_red(g):
         return red_string(g.name)
     return g.name
+
 
 def is_dead_pos(p):
     assert_is_pair_of_int(p)
@@ -460,7 +484,7 @@ class HumanAI(AI):
         print DIRECTION_INFO
         move = raw_input("move>>")
         r1 = [g for g in ghosts if g.name == move[0]][0]
-        r2 = dict(zip('KLHJNEWS', 'NEWSNEWS'))[move[1]]
+        r2 = dict(zip('KLHJNEWS', 'NEWSNEWS'))[move[1].upper()]
         return (r1, r2)
 
 
@@ -469,6 +493,11 @@ if __name__ == "__main__":
         _test()
     elif args.endless_test:
         endless_random_test()
+    elif args.battle:
+        run_player()
+        connect_server(HumanAI, 10001)
+    elif args.connect:
+        connect_server()
     else:
         run_random_player()
         connect_server(HumanAI)
