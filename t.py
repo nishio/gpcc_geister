@@ -17,6 +17,11 @@ names = "abcdefgh"
 FULL_NAMES = "ABCDEFGHabcdefgh"
 NOWHERE = (9, 9)
 BOARD_WIDTH = 6
+DIRECTION_INFO = """
+ N    K
+W E  H L
+ S    J
+"""
 
 TEST_BOARD = """
 .hgfe.
@@ -362,35 +367,6 @@ def color_ghost_string(g):
         return red_string(g.name)
     return g.name
 
-class HumanAI(AI):
-    "自分のゴールインまでの手数を短くする"
-    def choose_red_ghosts(self):
-        reds = choose_four_red_ghosts_randomly()
-        return reds
-
-    def choose_next_move(self, ghosts):
-        print ghosts
-        pos2ghosts = dict((x.pos, x) for x in ghosts)
-        pretty = ""
-        for y in range(6):
-            for x in range(6):
-                g = pos2ghosts.get((x, y))
-                if not g:
-                    pretty += '.'
-                else:
-                    pretty += color_ghost_string(g)
-            pretty += "\n"
-        print pretty
-        print ' '.join(
-            color_ghost_string(g)
-            for g in ghosts
-            if is_dead(g))
-
-        moves = possible_moves(ghosts)
-        raw_input(">>")
-        return choice(moves)
-
-
 def is_dead_pos(p):
     assert_is_pair_of_int(p)
     return (p == NOWHERE)
@@ -458,10 +434,42 @@ def possible_moves(ghosts):
     return ret
 
 
+class HumanAI(AI):
+    "自分のゴールインまでの手数を短くする"
+    def choose_red_ghosts(self):
+        reds = choose_four_red_ghosts_randomly()
+        return reds
+
+    def choose_next_move(self, ghosts):
+        pos2ghosts = dict((x.pos, x) for x in ghosts)
+        pretty = ""
+        for y in range(6):
+            for x in range(6):
+                g = pos2ghosts.get((x, y))
+                if not g:
+                    pretty += '.'
+                else:
+                    pretty += color_ghost_string(g)
+            pretty += "\n"
+        print pretty
+        print ' '.join(
+            color_ghost_string(g)
+            for g in ghosts
+            if is_dead(g))
+
+        print DIRECTION_INFO
+        move = raw_input("move>>")
+        r1 = [g for g in ghosts if g.name == move[0]][0]
+        r2 = dict(zip('KLHJNEWS', 'NEWSNEWS'))[move[1]]
+        return (r1, r2)
+
+
 if __name__ == "__main__":
     if args.test:
         _test()
     elif args.endless_test:
         endless_random_test()
     else:
-        connect_server()
+        run_random_player()
+        connect_server(HumanAI)
+
