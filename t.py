@@ -236,7 +236,7 @@ def assert_is_move(move):
     assert_is_direction(direction)
 
 
-def connect_server():
+def connect_server(ai=None):
     import socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((args.server, int(args.port)))
@@ -244,7 +244,11 @@ def connect_server():
     data = s.recv(1024)
     assert data == "SET?\r\n"
 
-    p = FastestAI()  # TODO: option
+    if ai:
+        p = ai()
+    else:
+        p = FastestAI()
+
     reds = p.choose_red_ghosts()
     reds = ''.join(reds).upper()
     msg = "SET:{}\r\n".format(reds)
