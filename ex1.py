@@ -4,6 +4,11 @@ from copy import copy
 from collections import defaultdict, Counter
 seed(1234)
 
+try:
+    profile
+except:
+    profile =  lambda f: f
+
 ## mini-geister
 IS_MINI_BOARD = False
 if IS_MINI_BOARD:
