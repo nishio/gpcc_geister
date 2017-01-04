@@ -1,0 +1,104 @@
+Timer unit: 1e-06 s
+
+Total time: 66.7148 s
+File: ex1.py
+Function: do_move at line 114
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   114                                           @profile
+   115                                           def do_move(game, side, move, show_detail=False):
+   116    892222     18529336     20.8     27.8      me, op = game.get_rotated(side)  # copied
+   117    892222      4098872      4.6      6.1      i, d = move
+   118    892222      4575168      5.1      6.9      if d == WIN: return WIN
+   119    889837      3939546      4.4      5.9      if show_detail: print board, move
+   120    889837      4114567      4.6      6.2      newpos = me[i] + d
+   121    889837      4448472      5.0      6.7      if newpos in op:
+   122                                                   #print 'killing', newpos
+   123     52743       442586      8.4      0.7          opi = op.index(newpos)
+   124     52743       257407      4.9      0.4          op[opi] = IS_DEAD
+   125                                                   # dead end check
+   126     52743      1133934     21.5      1.7          if all(x == IS_DEAD for x in get_blue(op)):
+   127      2630        10887      4.1      0.0              return WIN
+   128     50113       654643     13.1      1.0          if all(x == IS_DEAD for x in get_red(op)):
+   129      4566        18815      4.1      0.0              return LOSE
+   130                                           
+   131    882641      4238263      4.8      6.4      me[i] = newpos
+   132    882641      3881257      4.4      5.8      if show_detail: print board
+   133                                               #return Game.by_val(side, me, op)
+   134    882641     16371027     18.5     24.5      return game.set_val(side, me, op)
+
+Total time: 2.0127 s
+File: ex1.py
+Function: make_virtual_game at line 328
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   328                                           @profile
+   329                                           def make_virtual_game(v, side):
+   330                                               """
+   331                                               given a view, return a game
+   332                                               filling opponent's invisible ghost randomly
+   333                                               """
+   334      9580       268858     28.1     13.4      alive = copy(v.alive)
+   335      9580       437021     45.6     21.7      shuffle(alive)
+   336      9580        41603      4.3      2.1      split = 4 - v.dead_blue
+   337      9580       105005     11.0      5.2      blue = alive[:split] + [IS_DEAD] * v.dead_blue
+   338      9580        66031      6.9      3.3      red = alive[split:] + [IS_DEAD] * v.dead_red
+   339      9580      1058661    110.5     52.6      vg = Game.by_val(side, v.me, blue + red)
+   340      9580        35522      3.7      1.8      return vg
+
+Total time: 299.268 s
+File: ex1.py
+Function: choice at line 345
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   345                                               @profile
+   346                                               def choice(self, view):
+   347        67          297      4.4      0.0          side = 0
+   348        67         6705    100.1      0.0          moves = find_possible_move(view)
+   349        67          361      5.4      0.0          if moves[0][1] == WIN: return moves[0]
+   350        67          591      8.8      0.0          score = defaultdict(int)
+   351                                           
+   352      1025         4805      4.7      0.0          for move in moves:
+   353                                                       # 勝てるなら勝つ
+   354       958         4891      5.1      0.0              if move[1] == WIN: return move
+   355     10538        75745      7.2      0.0              for i in range(10):
+   356      9580      2509930    262.0      0.8                  g = make_virtual_game(view, side)
+   357      9580      1255478    131.1      0.4                  g = do_move(g, side, move)
+   358      9580    295270363  30821.5     98.7                  x = random_playout(g, 1 - side)
+   359      9580        72943      7.6      0.0                  if x == LOSE: score[move] += 1
+   360      9580        60955      6.4      0.0                  if x == WIN: score[move] -= 1
+   361                                           
+   362        67         4660     69.6      0.0          best = list(sorted((score[move], move) for move in score))[-1]
+   363        67          292      4.4      0.0          return best[1]
+
+Total time: 276.118 s
+File: ex1.py
+Function: random_playout at line 366
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   366                                           @profile
+   367                                           def random_playout(g, side):
+   368      9580        48136      5.0      0.0      if g == WIN: return LOSE
+   369      9580        43971      4.6      0.0      if g == LOSE: return WIN
+   370      9557        49141      5.1      0.0      random = Random()
+   371    443990      1767046      4.0      0.6      for i in range(MAX_TURNS):
+   372    443990     31931633     71.9     11.6          v = g.to_view(side)
+   373    443990     44499824    100.2     16.1          move = random.choice(v)
+   374                                                   #print move
+   375    443990     70918837    159.7     25.7          g = do_move(g, side, move)
+   376    443990      1934119      4.4      0.7          if g == WIN: return WIN
+   377    441753      1685384      3.8      0.6          if g == LOSE: return LOSE
+   378                                           
+   379    438518     23050058     52.6      8.3          v = g.to_view(1 - side)
+   380    438518     43743603     99.8     15.8          move = random.choice(v)
+   381                                                   #print move
+   382    438518     52951650    120.8     19.2          g = do_move(g, 1 - side, move)
+   383    438518      1879973      4.3      0.7          if g == WIN: return LOSE
+   384    435740      1614924      3.7      0.6          if g == LOSE: return WIN
+   385                                           
+   386                                               return EVEN
+
