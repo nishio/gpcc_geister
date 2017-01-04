@@ -41,19 +41,24 @@ class Game(object):
         me = [MAX_POS - pos for pos in op]
         shuffle(op)
         shuffle(me)
-        self.val = (me, op)
+        self.me = me
+        self.op = op
 
     @staticmethod
     def rotate(val):
         return [MAX_POS - pos if pos != IS_DEAD else IS_DEAD for pos in val]
 
     def get_rotated(self, side):
-        me = self.val[side][:]
-        op = self.val[1 - side][:]
         if side == 1:
+            me = self.op
+            op = self.me
             # rotate
             me = Game.rotate(me)
             op = Game.rotate(op)
+        else:
+            me = self.me[:]
+            op = self.op[:]
+
         return me, op
 
     def to_view(self, side):
@@ -83,11 +88,11 @@ class Game(object):
 
     def set_val(self, side, me, op):
         if side == 0:
-            self.val = (me, op)
+            self.me = me
+            self.op = op
         else:
-            self.val = (
-                Game.rotate(op),
-                Game.rotate(me))
+            self.me = Game.rotate(op)
+            self.op = Game.rotate(me)
         return self
 
 
