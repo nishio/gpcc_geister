@@ -8,9 +8,9 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--port", default=10000)
 parser.add_argument("-s", "--server", default="localhost")
-parser.add_argument("--endless-test", action='store_true')
-parser.add_argument("--connect", action='store_true')
-parser.add_argument("--battle", action='store_true')
+parser.add_argument("--endless-test", action='store_true', help='for random test')
+parser.add_argument("--battle", action='store_true', help='run given AI and Human player')
+parser.add_argument("--connect", action='store_true', help='run given AI and connect it to server')
 parser.add_argument("--ai", action='store')
 parser.add_argument("-t", "--test", action='store_true')
 args = parser.parse_args()
@@ -223,6 +223,9 @@ def connect_server(ai=None, port=None):
 
 
 def run_random_player():
+    """
+    run miyo's RandomPlayer 
+    """
     import subprocess
     import os
     FNULL = open(os.devnull, 'w')
@@ -233,6 +236,9 @@ def run_random_player():
 
 
 def run_player():
+    """
+    run AI(given by --ai) as subprocess
+    """
     import subprocess
     import os
     FNULL = open(os.devnull, 'w')
@@ -458,8 +464,8 @@ def possible_moves(ghosts):
     return ret
 
 
-class HumanAI(AI):
-    "自分のゴールインまでの手数を短くする"
+class HumanPlayer(AI):
+    "人間が操作する"
     def choose_red_ghosts(self):
         reds = choose_four_red_ghosts_randomly()
         return reds
