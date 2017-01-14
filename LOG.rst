@@ -82,6 +82,7 @@ python t.py  0.00s user 3.93s system 99% cpu 3.955 total
 10 0.394190871369
 
 -----
+
 2015-02-02
 
 モンテカルロで手を選ぶAIを実装する
@@ -118,4 +119,7 @@ do_moveの中ではgame.get_rotatedとgame.set_valが50%を占めていて、
 とりあえずmeとopをタプルにしたり戻したりしている所や、長さ8のリストをコピーしているところが無駄っぽいので削ってみよう。
 
 
+2017-01-14
+
+https://github.com/miyo/geister_server.java の新しいプロトコルで動くように修正。
 

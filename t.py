@@ -7,8 +7,11 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--port", default=10000)
-parser.add_argument("-s", "--server", default="localhost")
-parser.add_argument("--endless-test", action='store_true', help='for random test')
+parser.add_argument("--first", action='store_true', help='play as first player. Same as --port=10000')
+parser.add_argument("--second", action='store_true', help='play as second player. Same as --port=10001')
+parser.add_argument("-s", "--server", default='localhost', help='where is miyo\'s server. Default: localhost')
+parser.add_argument("--random-test", action='store_true', help='do random test')
+parser.add_argument("--endless", action='store_true', help='for random test')
 parser.add_argument("--battle", action='store_true', help='run given AI and Human player')
 parser.add_argument("--connect", action='store_true', help='run given AI and connect it to server')
 parser.add_argument("--ai", action='store')
@@ -208,8 +211,16 @@ def connect_server(ai=None, port=None):
     while True:
         data = s.recv(1024)
         if not data.startswith('MOV?'):
+            if data.startswith("OK"):
+                p.handle_OK(data[2])
+                continue
+            if data == "NG \r\n":
+                move = p.handle_NG()
+                msg = "MOV:{}\r\n".format(move_to_str(move))
+                s.send(msg)
+
             assert any(data.startswith(x) for x in ["WON", "LST", "DRW"])
-            if True:  # TODO: option
+            if True:
                 print data[:3]
             break
 
@@ -222,16 +233,16 @@ def connect_server(ai=None, port=None):
     s.close()
 
 
-def run_random_player():
+def run_random_player(port=10000):
     """
-    run miyo's RandomPlayer 
+    run miyo's RandomPlayer
     """
     import subprocess
     import os
     FNULL = open(os.devnull, 'w')
     subprocess.Popen(
-        "cd ../geister_server.java;"
-        " java -cp build/libs/geister.jar net.wasamon.geister.player.RandomPlayer localhost 10001"
+        "cd ../geister_server.java;" +
+        " java -cp build/libs/geister.jar net.wasamon.geister.player.RandomPlayer localhost {}".format(port) +
         " &> /dev/null", shell=True, stdout=FNULL, stderr=FNULL)
 
 
@@ -247,10 +258,18 @@ def run_player():
         " &> /dev/null", shell=True, stdout=FNULL, stderr=FNULL)
 
 
-def endless_random_test():
-    while True:
-        run_random_player()
-        connect_server()
+def random_test():
+    if args.endless:
+        while True:
+            run_random_player(port=10001)
+            connect_server(port=10000)
+
+            run_random_player(port=10000)
+            connect_server(port=10001)
+
+    else:
+        run_random_player(port=10001)
+        connect_server(port=10000)
 
 
 def _test():
@@ -262,6 +281,20 @@ class AI(object):
     def __repr__(self):
         return self.__class__.__name__
 
+    def choose_red_ghosts(self):
+        raise NotImplementedError
+
+    def choose_next_move(self, ghosts):
+        raise NotImplementedError
+
+    def handle_NG(self):
+        "called when server returns 'NG', should return `move`"
+        raise NotImplementedError
+
+    def handle_OK(self, color):
+        "called when server returns 'OK', color is in ' RB'"
+        #print 'GOT OK', color
+
 
 class RandomAI(AI):
     def choose_red_ghosts(self):
@@ -272,7 +305,6 @@ class RandomAI(AI):
         from random import choice
         moves = possible_moves(ghosts)
         return choice(moves)
-
 
 class FastestRedAI(AI):
     "自分のゴールインまでの手数を(赤を青とみなして)短くする"
@@ -495,16 +527,21 @@ class HumanPlayer(AI):
 
 
 if __name__ == "__main__":
+    if args.first:
+        args.port = 10000
+    if args.second:
+        args.port = 10001
+
     if args.test:
         _test()
-    elif args.endless_test:
-        endless_random_test()
+    elif args.random_test:
+        random_test()
     elif args.battle:
         run_player()
-        connect_server(HumanAI, 10001)
+        connect_server(HumanPlayer, 10001)
     elif args.connect:
         connect_server()
     else:
         run_random_player()
-        connect_server(HumanAI)
+        connect_server(HumanPlayer)
 
