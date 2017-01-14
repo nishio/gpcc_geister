@@ -9,13 +9,15 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--port", default=10000)
 parser.add_argument("--first", action='store_true', help='play as first player. Same as --port=10000')
 parser.add_argument("--second", action='store_true', help='play as second player. Same as --port=10001')
-parser.add_argument("-s", "--server", default='localhost', help='where is miyo\'s server. Default: localhost')
+parser.add_argument("-s", "--server", default='localhost', help='Where miyo\'s server is. Default: localhost')
 parser.add_argument("--random-test", action='store_true', help='do random test')
-parser.add_argument("--endless", action='store_true', help='for random test')
-parser.add_argument("--battle", action='store_true', help='run given AI and Human player')
-parser.add_argument("--connect", action='store_true', help='run given AI and connect it to server')
+parser.add_argument("--endless", action='store_true', help='continue random test forever')
 parser.add_argument("--ai", action='store')
 parser.add_argument("-t", "--test", action='store_true')
+parser.add_argument("--connect", action='store_true', help='run given AI and connect it to server')
+
+parser.add_argument("--battle", action='store_true', help='run given AI and Human player(obsolete)')
+
 args = parser.parse_args()
 
 from random import seed, choice
@@ -233,17 +235,36 @@ def connect_server(ai=None, port=None):
     s.close()
 
 
-def run_random_player(port=10000):
+MIYO_RANDOM_PLAYER = "net.wasamon.geister.player.RandomPlayer"
+MIYO_HUMAN_PLAYER = "net.wasamon.geister.player.HumanGUIPlayer"
+PATH_TO_SERVER = "../geister_server.java"
+import subprocess
+import os
+def run_miyo_player(ai, port=10000, extra=""):
     """
-    run miyo's RandomPlayer
+    run miyo's player
     """
-    import subprocess
-    import os
     FNULL = open(os.devnull, 'w')
     subprocess.Popen(
-        "cd ../geister_server.java;" +
-        " java -cp build/libs/geister.jar net.wasamon.geister.player.RandomPlayer localhost {}".format(port) +
-        " &> /dev/null", shell=True, stdout=FNULL, stderr=FNULL)
+        "cd {};".format(PATH_TO_SERVER) +
+        " java -cp build/libs/geister.jar {} {} {} {}".format(ai, args.server, port, extra),
+        shell=True)#, stdout=FNULL, stderr=FNULL)
+
+
+def run_random_player(port=10000):
+    """
+    run miyo's random player
+    """
+    run_miyo_player(MIYO_RANDOM_PLAYER, port)
+
+
+def run_miyo_human_player():
+    """
+    run miyo's HumanGUIPlayer
+    """
+    reds = choose_four_red_ghosts_randomly()
+    reds = ''.join(reds).upper()
+    run_miyo_player(MIYO_HUMAN_PLAYER, 20001 - args.port, reds)
 
 
 def run_player():
@@ -305,6 +326,7 @@ class RandomAI(AI):
         from random import choice
         moves = possible_moves(ghosts)
         return choice(moves)
+
 
 class FastestRedAI(AI):
     "自分のゴールインまでの手数を(赤を青とみなして)短くする"
@@ -554,17 +576,19 @@ if __name__ == "__main__":
         args.port = 10000
     if args.second:
         args.port = 10001
+    if not args.port:
+        args.port = 10000
 
     if args.test:
         _test()
     elif args.random_test:
         random_test()
-    elif args.battle:
-        run_player()
-        connect_server(HumanPlayer, 10001)
     elif args.connect:
         connect_server()
+    elif args.battle:
+        # battle with python AI via console, may be obsolete
+        run_player()
+        connect_server(HumanPlayer, 10001)
     else:
-        run_random_player()
-        connect_server(HumanPlayer)
-
+        run_miyo_human_player()
+        connect_server()
