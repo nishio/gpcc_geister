@@ -201,7 +201,7 @@ def connect_server(ai=None, port=None):
     elif args.ai:
         p = eval(args.ai)()
     else:
-        p = FastestAI()
+        p = DefaultAI()
 
     reds = p.choose_red_ghosts()
     reds = ''.join(reds).upper()
@@ -354,6 +354,29 @@ class FastestAI(AI):
                 dist = calc_dist(newpos)
             scored_moves[dist].append(move)
         return choice(scored_moves[min(scored_moves)])
+
+
+class FastestColorblindAI(AI):
+    "自分のゴールインまでの手数を短くする。色は無視。"
+    def choose_red_ghosts(self):
+        reds = choose_four_red_ghosts_randomly()
+        return reds
+
+    def choose_next_move(self, ghosts):
+        moves = possible_moves(ghosts)
+        from collections import defaultdict
+        scored_moves = defaultdict(list)
+        def calc_dist(pos):
+            x, y = pos
+            return y + min(x, 3 - x)
+
+        for move in moves:
+            ghost, d = move
+            newpos = calc_new_pos(ghost.pos, d)
+            dist = calc_dist(newpos)
+            scored_moves[dist].append(move)
+        return choice(scored_moves[min(scored_moves)])
+DefaultAI = FastestColorblindAI
 
 
 class EpsilonFastestAI(AI):
