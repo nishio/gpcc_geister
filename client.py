@@ -248,7 +248,7 @@ def run_miyo_player(ai, port=10000, extra=""):
     subprocess.Popen(
         "cd {};".format(PATH_TO_SERVER) +
         " java -cp build/libs/geister.jar {} {} {} {}".format(ai, args.server, port, extra),
-        shell=True)#, stdout=FNULL, stderr=FNULL)
+        shell=True, stdout=FNULL, stderr=FNULL)
 
 
 def run_random_player(port=10000):
