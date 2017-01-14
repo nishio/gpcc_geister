@@ -92,3 +92,30 @@ python t.py  0.00s user 3.93s system 99% cpu 3.955 total
 
 高速化が必要。
 ボトルネックはmallocなのでBoostPythonが必要か
+
+
+
+2017-01-07
+
+仕切り直し。
+
+とりあえず現状を確認。プロファイラなしで起動
+
+$ time python ex1.py
+Counter({'WIN': 1})
+python ex1.py  54.45s user 0.17s system 97% cpu 55.960 total
+
+プロファイラありで起動。
+
+$ time kernprof -l ex1.py
+Counter({'WIN': 1})
+Wrote profile results to ex1.py.lprof
+kernprof -l ex1.py  252.32s user 46.21s system 99% cpu 5:01.20 total
+
+profile.txtに結果を保存。2年前はボトルネックはmallocって書いてるけど、
+random_playoutから呼ばれてるdo_moveとrandom.choiceが大きい。
+do_moveの中ではgame.get_rotatedとgame.set_valが50%を占めていて、
+とりあえずmeとopをタプルにしたり戻したりしている所や、長さ8のリストをコピーしているところが無駄っぽいので削ってみよう。
+
+
+
