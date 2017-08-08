@@ -88,8 +88,8 @@ class Game(object):
 
     def set_val(self, side, me, op):
         if side == 0:
-            self.me = me
-            self.op = op
+            self.me = list(me)
+            self.op = list(op)
         else:
             self.me = Game.rotate(op)
             self.op = Game.rotate(me)
@@ -252,10 +252,12 @@ class FastestP(AI):
 
 
 MAX_TURNS = 300
-def match(p1, p2, show_detail=True, record=True):
+def match(p1_gen, p2_gen, show_detail=True, record=True):
     "match p1 and p2, return p1's WIN/LOSE/EVEN"
     g = Game()
     #print g
+    p1 = p1_gen()
+    p2 = p2_gen()
     for i in range(MAX_TURNS):
         v = g.to_view(0)
         if show_detail:
@@ -390,4 +392,4 @@ def random_playout(g, side):
 
     return EVEN
 
-print Counter(match(Montecarlo(), Random(), False) for i in range(1))
+#print Counter(match(Montecarlo, Random, False) for i in range(1))
