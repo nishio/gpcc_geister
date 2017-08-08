@@ -1,4 +1,5 @@
 # -*- encoding: utf-8 -*-
+import numpy as np
 from random import choice, shuffle, seed, random
 from copy import copy
 from collections import defaultdict, Counter
@@ -10,7 +11,7 @@ except:
     profile =  lambda f: f
 
 ## mini-geister
-IS_MINI_BOARD = True
+IS_MINI_BOARD = False
 if IS_MINI_BOARD:
     NUM_GEISTER = 2
     BOARD_WIDTH = 4
@@ -25,10 +26,10 @@ UP = -BOARD_WIDTH
 DOWN = BOARD_WIDTH
 RIGHT = 1
 LEFT = -1
-
 WIN = 'WIN'
 LOSE = 'LOSE'
 EVEN = 'EVEN'
+DIR_TO_STR = {UP: "UP", DOWN: "DOWN", RIGHT: "RIGHT", LEFT: "LEFT", WIN: "WIN"}
 
 class Game(object):
     def __init__(self):
@@ -258,21 +259,35 @@ class Logger(object):
         self.buf = None
         self.fo = file("monte_monte.csv", "w")
         self.writer = csv.writer(self.fo)
-        self.writer.writerow(
-            ("GameMe0 GameMe1 GameOp0 GameOp1 ViewBlue0 ViewRed0 "
-             "ViewAlive0 ViewAlive1 Side "
-             "ActionIndex ActionDirection Winner").split())
+        header = (
+            ["GameMe%d" % i for i in range(NUM_GEISTER)] +
+            ["GameOp%d" % i for i in range(NUM_GEISTER)] +
+            ["View%d" % i for i in range(BOARD_WIDTH * BOARD_WIDTH)] +
+            ["DeadBlue", "DeadRed", "Side",
+             "ActionIndex", "ActionDirection", "Winner"]
+        )
+        self.writer.writerow(header)
     def record_game(self, game, side):
         me, op = game.get_rotated(side)
         self.buf = me + op
     def record_view(self, view, side):
+        board = ["EMPTY"] * (BOARD_WIDTH * BOARD_WIDTH)
+        for pos in view.get_blue():
+            if pos == IS_DEAD: continue
+            board[pos] = "BLUE"
+        for pos in view.get_red():
+            if pos == IS_DEAD: continue
+            board[pos] = "RED"
+        for pos in view.alive:
+            board[pos] = "ALIVE"
+
         self.buf += (
-            view.get_blue() +
-            view.get_red() +
-            view.alive +
-            [side])
+            board + [view.dead_blue, view.dead_red, side])
+
     def record_action(self, action):
-        self.buf += list(action)
+        index, direction = action
+        dstr = DIR_TO_STR[direction]
+        self.buf += [index, dstr]
     def next_record(self):
         self.data.append(self.buf)
         #print self.buf
@@ -314,9 +329,13 @@ def match(p1_gen, p2_gen, show_detail=True, record=True):
         #print move
         g = do_move(g, 0, move)
 
-        if g == WIN or g == LOSE:
-            logger.finish(g)
-            return g
+
+        if g == WIN:
+            logger.finish(1)
+            return WIN
+        if g == LOSE:
+            logger.finish(-1)
+            return LOSE
 
         if show_detail:
             v = g.to_view(0)
@@ -336,10 +355,10 @@ def match(p1_gen, p2_gen, show_detail=True, record=True):
         #print move
         g = do_move(g, 1, move)
         if g == WIN:
-            logger.finish(g)
+            logger.finish(-1)
             return LOSE
         if g == LOSE:
-            logger.finish(g)
+            logger.finish(1)
             return WIN
 
             return g
@@ -349,7 +368,7 @@ def match(p1_gen, p2_gen, show_detail=True, record=True):
             print_view(v)
 
 
-    logger.finish(EVEN)
+    logger.finish(0)
     return EVEN
 
 
@@ -462,5 +481,5 @@ t = clock()
 #print Counter(match(Montecarlo, Random, False) for i in range(100))
 #print Counter(match(Random, Montecarlo, False) for i in range(100))
 #print Counter(match(Montecarlo, Montecarlo, False) for i in range(100))
-print Counter(match(Montecarlo, Montecarlo, False) for i in range(10000))
+print Counter(match(Montecarlo, Montecarlo, False) for i in range(1000))
 print clock() - t
