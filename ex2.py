@@ -10,7 +10,7 @@ except:
     profile =  lambda f: f
 
 ## mini-geister
-IS_MINI_BOARD = False
+IS_MINI_BOARD = True
 if IS_MINI_BOARD:
     NUM_GEISTER = 2
     BOARD_WIDTH = 4
@@ -251,40 +251,105 @@ class FastestP(AI):
         return Fastest().choice(view)
 
 
+class Logger(object):
+    def __init__(self):
+        import csv
+        self.data = []
+        self.buf = None
+        self.fo = file("monte_monte.csv", "w")
+        self.writer = csv.writer(self.fo)
+        self.writer.writerow(
+            ("GameMe0 GameMe1 GameOp0 GameOp1 ViewBlue0 ViewRed0 "
+             "ViewAlive0 ViewAlive1 Side "
+             "ActionIndex ActionDirection Winner").split())
+    def record_game(self, game, side):
+        me, op = game.get_rotated(side)
+        self.buf = me + op
+    def record_view(self, view, side):
+        self.buf += (
+            view.get_blue() +
+            view.get_red() +
+            view.alive +
+            [side])
+    def record_action(self, action):
+        self.buf += list(action)
+    def next_record(self):
+        self.data.append(self.buf)
+        #print self.buf
+        self.buf = None
+    def finish(self, winner):
+        #print self.data
+        for line in self.data:
+            line.append(winner)
+        self.writer.writerows(self.data)
+        self.fo.flush()
+        self.data = []
+
 MAX_TURNS = 300
+
+
+logger = Logger()
 def match(p1_gen, p2_gen, show_detail=True, record=True):
     "match p1 and p2, return p1's WIN/LOSE/EVEN"
+
+    # Initialize Game
     g = Game()
     #print g
+
+    # Initialize Agents
     p1 = p1_gen()
     p2 = p2_gen()
     for i in range(MAX_TURNS):
+        logger.record_game(g, 0)
         v = g.to_view(0)
+        logger.record_view(v, 0)
+
         if show_detail:
             print p1
             print_view(v)
         move = p1.choice(v)
+        logger.record_action(move)
+        logger.next_record()
+
         #print move
         g = do_move(g, 0, move)
-        if g == WIN: return WIN
-        if g == LOSE: return LOSE
+
+        if g == WIN or g == LOSE:
+            logger.finish(g)
+            return g
+
         if show_detail:
             v = g.to_view(0)
             print_view(v)
 
+
+        logger.record_game(g, 1)
         v = g.to_view(1)
+        logger.record_view(v, 1)
         if show_detail:
             print p2
             print_view(v)
         move = p2.choice(v)
+        logger.record_action(move)
+        logger.next_record()
+
         #print move
         g = do_move(g, 1, move)
-        if g == WIN: return LOSE
-        if g == LOSE: return WIN
+        if g == WIN:
+            logger.finish(g)
+            return LOSE
+        if g == LOSE:
+            logger.finish(g)
+            return WIN
+
+            return g
+
         if show_detail:
             v = g.to_view(1)
             print_view(v)
 
+
+    logger.finish(EVEN)
     return EVEN
 
 
@@ -392,4 +457,10 @@ def random_playout(g, side):
 
     return EVEN
 
-#print Counter(match(Montecarlo, Random, False) for i in range(1))
+from time import clock
+t = clock()
+#print Counter(match(Montecarlo, Random, False) for i in range(100))
+#print Counter(match(Random, Montecarlo, False) for i in range(100))
+#print Counter(match(Montecarlo, Montecarlo, False) for i in range(100))
+print Counter(match(Montecarlo, Montecarlo, False) for i in range(10000))
+print clock() - t
