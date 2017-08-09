@@ -259,12 +259,13 @@ class Logger(object):
         self.buf = None
         self.fo = file("monte_monte.csv", "w")
         self.writer = csv.writer(self.fo)
+        self.game_id = 0
         header = (
             ["GameMe%d" % i for i in range(NUM_GEISTER)] +
             ["GameOp%d" % i for i in range(NUM_GEISTER)] +
             ["View%d" % i for i in range(BOARD_WIDTH * BOARD_WIDTH)] +
             ["DeadBlue", "DeadRed", "Side",
-             "ActionIndex", "ActionDirection", "Winner"]
+             "ActionIndex", "ActionDirection", "Winner", "GameId"]
         )
         self.writer.writerow(header)
     def record_game(self, game, side):
@@ -296,9 +297,11 @@ class Logger(object):
         #print self.data
         for line in self.data:
             line.append(winner)
+            line.append(self.game_id)
         self.writer.writerows(self.data)
         self.fo.flush()
         self.data = []
+        self.game_id += 1
 
 MAX_TURNS = 300
 
