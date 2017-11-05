@@ -242,7 +242,7 @@ class Fastest(AI):
 
 class FastestP(AI):
     "epsilon greedy"
-    def __init__(self, p):
+    def __init__(self, p=0.1):
         self.p = p
     def choice(self, view):
         moves = find_possible_move(view)

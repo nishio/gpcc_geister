@@ -484,5 +484,5 @@ t = clock()
 #print Counter(match(Montecarlo, Random, False) for i in range(100))
 #print Counter(match(Random, Montecarlo, False) for i in range(100))
 #print Counter(match(Montecarlo, Montecarlo, False) for i in range(100))
-print Counter(match(Montecarlo, Montecarlo, False) for i in range(1000))
+print Counter(match(Montecarlo, Montecarlo, False) for i in range(1))
 print clock() - t
